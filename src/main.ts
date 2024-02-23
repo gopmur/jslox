@@ -1,4 +1,5 @@
 import { program } from "commander";
+import * as lox from "./lox";
 
 (function main() {
 
@@ -7,5 +8,13 @@ import { program } from "commander";
         filePath = argument;
     });
     program.parse(process.argv);
+
+    if (process.argv.length == 0) {
+        // run the repl
+    }
+
+    else {
+        lox.interpret(filePath);
+    }
     
 })();

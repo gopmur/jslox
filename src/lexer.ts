@@ -1,5 +1,5 @@
 import { Literal, Token, TokenType } from "./token";
-import { Lox } from "./lox";
+import { error } from "./lox";
 
 export class Scanner {
 	private readonly tokens: Token[];
@@ -37,21 +37,16 @@ export class Scanner {
 		return this.tokens;
 	}
 
-	private advance(): string {
-		return this.source[this.current++];
-	}
-
 	private scanToken(): void {
 		const char = this.advance();
 
 		switch (char) {
 			case "/":
 				if (this.match("/")) {
-                    while(!this.isAtEnd() && this.peek() != "\n") {
-                        this.advance();
-                    }
-				}
-                else this.addToken(TokenType.SLASH);
+					while (!this.isAtEnd() && this.peek() != "\n") {
+						this.advance();
+					}
+				} else this.addToken(TokenType.SLASH);
 				break;
 			case "(":
 				this.addToken(TokenType.LEFT_PAREN);
@@ -106,19 +101,37 @@ export class Scanner {
 				);
 				break;
 
-            case " ":
-            case "\r":
-            case "\t":
-                break;
+			case " ":
+			case "\r":
+			case "\t":
+				break;
 
-            case "\n":
-                this.line++;
-                break;
+			case "\n":
+				this.line++;
+				break;
+
+			case '"':
+				let stringValue = "";
+				let char = this.advance();
+				while (char != '"') {
+					stringValue += char;
+					if (this.peek() == "\n" || this.isAtEnd()) {
+						error(this.line, 'Missing "');
+						break;
+					}
+					char = this.advance();
+				}
+				this.addToken(TokenType.STRING, stringValue);
+				break;
 
 			default:
-				Lox.error(this.line, "Unexpected character.");
+				error(this.line, "Unexpected character.");
 				break;
 		}
+	}
+
+	private advance(): string {
+		return this.source[this.current++];
 	}
 
 	private peek(): string {

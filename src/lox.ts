@@ -1,12 +1,21 @@
-export class Lox {
-    static hasError = false;
+import { Scanner } from "./lexer";
+import * as fs from "fs";
 
-    static error(line: number, message: string) {
-        this.hasError = true;
-        this.report(line, "", message);
-    }
-    
-    static report(line: number, where: string, message: string) {
-        console.error(`[line ${line}] Error${where}: ${message}`);
-    }
+let hasError = false;
+
+export function error(line: number, message: string): void {
+    hasError = true;
+    report(line, "", message);
+}
+
+function report(line: number, where: string, message: string): void {
+    console.error(`[line ${line}] Error${where}: ${message}`);
+}
+
+export function interpret(sourceFilePath: string): void {
+    let source = fs.readFileSync(sourceFilePath, "utf-8");
+    let scanner = new Scanner(source);
+    let tokens =  scanner.scanTokens();
+    console.log(tokens);
+    if (hasError) return;
 }
