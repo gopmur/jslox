@@ -1,4 +1,4 @@
-import { Literal, Token, TokenType } from "./token";
+import { Literal, Token, TokenType, keywordsMap } from "./token";
 import { error } from "./lox";
 
 export class Scanner {
@@ -27,12 +27,7 @@ export class Scanner {
 			this.scanToken();
 		}
 
-		this.tokens.push({
-			tokenType: TokenType.EOF,
-			lexeme: "",
-			line: this.line,
-			literal: null,
-		});
+		this.tokens.push(new Token(TokenType.EOF, "", this.line, null));
 
 		return this.tokens;
 	}
@@ -111,23 +106,25 @@ export class Scanner {
 				break;
 
 			case '"':
-				let stringValue = "";
-				let char = this.advance();
-				while (char != '"') {
-					stringValue += char;
-					if (this.peek() == "\n" || this.isAtEnd()) {
-						error(this.line, 'Missing "');
-						break;
-					}
-					char = this.advance();
-				}
-				this.addToken(TokenType.STRING, stringValue);
+				this.scanString();
 				break;
 
 			default:
-				error(this.line, "Unexpected character.");
+				if (Scanner.isDigit(char)) {
+					this.scanNumber();
+				} else if (Scanner.isAlphabet(char)) {
+					this.scanIdentifier();
+				} else {
+					error(this.line, "Unexpected character.");
+				}
 				break;
 		}
+	}
+
+	private scanIdentifier() {
+		while (Scanner.isAlphanumerical(this.peek())) this.advance();
+		// @ts-ignore
+		this.addToken(keywordsMap[this.source.substring(this.start, this.current)] ?? TokenType.IDENTIFIER);
 	}
 
 	private advance(): string {
@@ -147,11 +144,66 @@ export class Scanner {
 
 	private addToken(tokenType: TokenType, literal?: Literal) {
 		if (literal == undefined) literal = null;
-		this.tokens.push({
-			tokenType: tokenType,
-			lexeme: this.source.substring(this.start, this.current),
-			line: this.line,
-			literal: literal,
-		});
+		this.tokens.push(
+			new Token(
+				tokenType,
+				this.source.substring(this.start, this.current),
+				this.line,
+				literal,
+			),
+		);
+	}
+
+	private scanString(): void {
+		let stringValue = "";
+		let char = this.advance();
+
+		while (char != '"') {
+			stringValue += char;
+			if (this.peek() == "\n" || this.isAtEnd()) {
+				error(this.line, 'Missing "');
+				break;
+			}
+			char = this.advance();
+		}
+		this.addToken(TokenType.STRING, stringValue);
+	}
+
+	private static isDigit(char: string): boolean {
+		return (
+			char.length == 1 &&
+			"9".charCodeAt(0) >= char.charCodeAt(0) &&
+			char.charCodeAt(0) >= "0".charCodeAt(0)
+		);
+	}
+
+	private peekNext() {
+		if (this.current + 1 >= this.source.length) return "\0";
+		return this.source[this.current + 1];
+	}
+
+	private scanNumber(): void {
+		while (Scanner.isDigit(this.peek())) this.advance();
+		if (this.peek() == "." && Scanner.isDigit(this.peekNext()))
+			this.advance();
+		while (Scanner.isDigit(this.peek())) this.advance();
+
+		this.addToken(
+			TokenType.NUMBER,
+			Number(this.source.substring(this.start, this.current)),
+		);
+	}
+
+	private static isAlphabet(char: string): boolean {
+		let charCode = char.charCodeAt(0);
+		return (
+			(charCode >= "a".charCodeAt(0) && charCode <= "z".charCodeAt(0)) ||
+			(charCode >= "A".charCodeAt(0) && charCode <= "Z".charCodeAt(0)) ||
+			charCode == "_".charCodeAt(0)
+		);
+	}
+
+	private static isAlphanumerical(char: string): boolean {
+		return Scanner.isAlphabet(char) || Scanner.isDigit(char);
 	}
 }

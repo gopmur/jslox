@@ -9,8 +9,8 @@ import * as lox from "./lox";
     });
     program.parse(process.argv);
 
-    if (process.argv.length == 0) {
-        // run the repl
+    if (filePath == undefined) {
+        lox.start_repl();
     }
 
     else {

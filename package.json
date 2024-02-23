@@ -7,8 +7,8 @@
 		"build": "tsc --build",
 		"start": "npm run build && node build/main.js",
 		"test": "jest --config=jest.config.ts",
-		"int": "ts-node src/main.ts test/test_codes/dev_test.lox",
-		"repl": "ts-node src/main.ts"
+		"int": "npm run build && node build/main.js test/test_codes/dev_test.lox",
+		"repl": "npm run build && node build/main.js"
 	},
 	"keywords": [
 		"interpreter",

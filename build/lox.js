@@ -23,19 +23,34 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const commander_1 = require("commander");
-const lox = __importStar(require("./lox"));
-(function main() {
-    let filePath = "";
-    commander_1.program.argument("[input-file]").action((argument) => {
-        filePath = argument;
-    });
-    commander_1.program.parse(process.argv);
-    if (filePath == undefined) {
-        lox.start_repl();
+exports.interpret = exports.start_repl = exports.error = void 0;
+const readline_sync_1 = require("readline-sync");
+const lexer_1 = require("./lexer");
+const fs = __importStar(require("fs"));
+let hasError = false;
+function error(line, message) {
+    hasError = true;
+    report(line, "", message);
+}
+exports.error = error;
+function report(line, where, message) {
+    console.error(`[line ${line}] Error${where}: ${message}`);
+}
+function start_repl() {
+    while (true) {
+        let line = (0, readline_sync_1.question)("> ");
+        let scanner = new lexer_1.Scanner(line);
+        console.log(scanner.scanTokens());
     }
-    else {
-        lox.interpret(filePath);
-    }
-})();
-//# sourceMappingURL=main.js.map
+}
+exports.start_repl = start_repl;
+function interpret(sourceFilePath) {
+    let source = fs.readFileSync(sourceFilePath, "utf-8");
+    let scanner = new lexer_1.Scanner(source);
+    let tokens = scanner.scanTokens();
+    console.log(tokens);
+    if (hasError)
+        return;
+}
+exports.interpret = interpret;
+//# sourceMappingURL=lox.js.map
